@@ -2,13 +2,16 @@ name: ci
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "v*"
 
-# Checkout the code and zip the mesh_to_pcd folder as a build artifact
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
 
     steps:
     - uses: actions/checkout@v4
@@ -21,3 +24,10 @@ jobs:
       with:
         name: mesh_to_pcd
         path: mesh_to_pcd.zip
+
+    - name: Create a release
+      uses: marvinpinto/action-automatic-releases@latest
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        prerelease: false
+        files: mesh_to_pcd.zip
