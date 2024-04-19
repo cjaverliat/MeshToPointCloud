@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+
+# Checkout the code and zip the mesh_to_pcd folder as a build artifact
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Zip the mesh_to_pcd folder
+      run: zip -r mesh_to_pcd.zip mesh_to_pcd
+
+    - name: Upload the mesh_to_pcd.zip as a build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mesh_to_pcd
+        path: mesh_to_pcd.zip

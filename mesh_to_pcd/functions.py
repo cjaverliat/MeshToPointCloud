@@ -14,14 +14,14 @@ def set_socket_value(modifier, socket_name, value):
     if socket_id is not None:
         modifier[socket_id] = value
 
-def export_point_cloud(filename, vertices_positions, vertices_colors):
+def export_point_cloud(output_filepath, vertices_positions, vertices_colors):
     
     if len(vertices_positions) != len(vertices_colors):
         raise ValueError("Number of positions and colors must be the same.")
     
     n_points = len(vertices_positions)
 
-    with open(filename, "w") as f:
+    with open(output_filepath, "w") as f:
         f.write("ply\n")
         f.write("format ascii 1.0\n")
         f.write(f"element vertex {n_points}\n")
@@ -43,24 +43,24 @@ def export_point_cloud(filename, vertices_positions, vertices_colors):
             a = int(col[3] * 255)
             f.write(f"{pos[0]:.2f} {pos[1]:.2f} {pos[2]:.2f} {r} {g} {b} {a}\n")
 
-def mesh_to_pcd(mesh, filename):
+def mesh_to_pcd(mesh, density_min, density_max, output_filepath, context):
 
     if mesh.type != "MESH":
         raise ValueError("Object is not a mesh.")
 
-    generator = bpy.context.collection.objects.get("Generator")
+    generator = context.collection.objects.get("Generator")
 
     if generator is None:
-        filepath = pathlib.Path(bpy.context.space_data.text.filepath).parent / "generate_point_cloud.blend"
+        lib_filepath = pathlib.Path(__file__).parent / "generate_point_cloud.blend"
 
-        if not filepath.exists():
-            raise FileNotFoundError(f"File {filepath} not found.")
+        if not lib_filepath.exists():
+            raise FileNotFoundError(f"File {lib_filepath} not found.")
 
-        with bpy.data.libraries.load(filepath.absolute().as_posix(), link=True, assets_only=True) as (data_from, data_to):
+        with bpy.data.libraries.load(lib_filepath.absolute().as_posix(), link=True, assets_only=True) as (data_from, data_to):
             data_to.objects = ["Generator"]
 
         for obj in data_to.objects:
-                bpy.context.collection.objects.link(obj)
+                context.collection.objects.link(obj)
                 generator = obj
     
     try:
@@ -74,8 +74,8 @@ def mesh_to_pcd(mesh, filename):
         material_texture = base_color.links[0].from_node.image if len(base_color.links) > 0 else None
 
         set_socket_value(modifier, "Object", mesh)
-        set_socket_value(modifier, "Density Min", 0.0)
-        set_socket_value(modifier, "Density Max", 10000.0)
+        set_socket_value(modifier, "Density Min", density_min)
+        set_socket_value(modifier, "Density Max", density_max)
         set_socket_value(modifier, "Base Color", base_color.default_value)
         set_socket_value(modifier, "Texture", material_texture)
         set_socket_value(modifier, "Use Texture", material_texture is not None)
@@ -86,23 +86,6 @@ def mesh_to_pcd(mesh, filename):
 
         pos_attr_data = mesh_eval.attributes['position'].data
         col_attr_data = mesh_eval.attributes['color'].data
-        export_point_cloud(filename, pos_attr_data, col_attr_data)
+        export_point_cloud(output_filepath, pos_attr_data, col_attr_data)
     finally:
         bpy.data.objects.remove(generator, do_unlink=True)
-
-if __name__ == "__main__":
-    objects = bpy.context.selected_objects
-    meshes = [obj for obj in objects if obj.type == "MESH"]
-
-    if len(meshes) == 0:
-        raise ValueError("No mesh selected.")
-
-    exported_count = 0
-
-    for mesh in meshes:
-        filename = f"{bpy.path.clean_name(mesh.name)}_pcd.ply"
-        mesh_to_pcd(mesh, filename)
-        print(f"Exported point cloud to {pathlib.Path(filename).absolute().as_posix()}.")
-        exported_count += 1
-    
-    print(f"Exported {exported_count} point clouds.")
