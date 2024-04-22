@@ -3,8 +3,8 @@ import pathlib
 
 from .functions import mesh_to_pcd
 
-class MeshToPCDOperator(bpy.types.Operator):
-    bl_idname = "object.mesh_to_pcd"
+class MESH_OT_generate_pcd(bpy.types.Operator):
+    bl_idname = "object.generate_pcd"
     bl_label = "Export Mesh to Point Cloud"
     bl_description = "Export selected mesh to point cloud"
 
@@ -50,3 +50,14 @@ class MeshToPCDOperator(bpy.types.Operator):
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
+
+def menu_func(self, context):
+    self.layout.operator(MESH_OT_generate_pcd.bl_idname)
+
+def register():
+    bpy.utils.register_class(MESH_OT_generate_pcd)
+    bpy.types.VIEW3D_MT_object.append(menu_func)
+
+def unregister():
+    bpy.utils.unregister_class(MESH_OT_generate_pcd)
+    bpy.types.VIEW3D_MT_object.remove(menu_func)

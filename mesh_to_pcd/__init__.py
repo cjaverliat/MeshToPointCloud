@@ -1,5 +1,5 @@
 import bpy
-from .operators import MeshToPCDOperator
+from .operators import register as operators_register, unregister as operators_unregister
 
 bl_info = {
     "name": "Mesh to Point Cloud",
@@ -7,17 +7,11 @@ bl_info = {
     "category": "Object",
 }
 
-def menu_func(self, context):
-    self.layout.operator(MeshToPCDOperator.bl_idname)
-
 def register():
-    bpy.utils.register_class(MeshToPCDOperator)
-    bpy.types.VIEW3D_MT_object.append(menu_func)
+    operators_register()
 
 def unregister():
-    bpy.utils.unregister_class(MeshToPCDOperator)
-    bpy.types.VIEW3D_MT_object.remove(menu_func)
+    operators_unregister()
 
 if __name__ == "__main__":
     register()
-    bpy.ops.wm.testui("INVOKE_DEFAULT")

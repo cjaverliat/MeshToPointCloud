@@ -1,4 +1,6 @@
 *.blend1
 .vscode/
 .idea/
+**/__pycache__/
+**/*.blend1
 mesh_to_pcd.zip
